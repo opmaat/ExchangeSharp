@@ -21,7 +21,7 @@ namespace ExchangeSharp
     /// <summary>
     /// Information about an exchange
     /// </summary>
-    public class ExchangeInfo
+    public sealed class ExchangeInfo
     {
         /// <summary>
         /// Constructor
@@ -31,7 +31,7 @@ namespace ExchangeSharp
         public ExchangeInfo(IExchangeAPI api, string symbol = null)
         {
             API = api;
-            Symbols = api.GetSymbols().ToArray();
+            Symbols = api.GetSymbolsAsync().Sync().ToArray();
             TradeInfo = new ExchangeTradeInfo(this, symbol);
         }
 

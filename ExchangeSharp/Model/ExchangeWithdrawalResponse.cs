@@ -15,7 +15,7 @@ namespace ExchangeSharp
     /// <summary>
     /// Class encapsulating a withdrawal response from an exchange
     /// </summary>
-    public class ExchangeWithdrawalResponse
+    public sealed class ExchangeWithdrawalResponse
     {
         /// <summary>The message of the transacion.</summary>
         public string Message { get; set; }
@@ -30,7 +30,7 @@ namespace ExchangeSharp
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
         public override string ToString()
         {
-            return $"Success: {this.Success} Id: {this.Id ?? "null"} Message: {this.Message ?? "null"}";
+            return $"Success: {Success} Id: {Id ?? "null"} Message: {Message ?? "null"}";
         }
     }
 }

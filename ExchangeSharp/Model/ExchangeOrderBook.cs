@@ -14,8 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ExchangeSharp
 {
@@ -67,17 +65,32 @@ namespace ExchangeSharp
     /// <summary>
     /// Represents all the asks (sells) and bids (buys) for an exchange asset
     /// </summary>
-    public class ExchangeOrderBook
+    public sealed class ExchangeOrderBook
     {
+        /// <summary>
+        /// The sequence id. This increments as updates come through. Not all exchanges will populate this.
+        /// This property is not serialized using the ToBinary and FromBinary methods.
+        /// </summary>
+        public long SequenceId { get; set; }
+
+        /// <summary>
+        /// The symbol.
+        /// This property is not serialized using the ToBinary and FromBinary methods.
+        /// </summary>
+        public string Symbol { get; set; }
+
+        /// <summary>The last updated UTC</summary>
+        public DateTime LastUpdatedUtc { get; set; } = DateTime.MinValue;
+
         /// <summary>
         /// List of asks (sells)
         /// </summary>
-        public List<ExchangeOrderPrice> Asks { get; } = new List<ExchangeOrderPrice>();
+        public SortedDictionary<decimal, ExchangeOrderPrice> Asks { get; } = new SortedDictionary<decimal, ExchangeOrderPrice>();
 
         /// <summary>
         /// List of bids (buys)
         /// </summary>
-        public List<ExchangeOrderPrice> Bids { get; } = new List<ExchangeOrderPrice>();
+        public SortedDictionary<decimal, ExchangeOrderPrice> Bids { get; } = new SortedDictionary<decimal, ExchangeOrderPrice>(new DescendingComparer<decimal>());
 
         /// <summary>
         /// ToString
@@ -96,11 +109,11 @@ namespace ExchangeSharp
         {
             writer.Write(Asks.Count);
             writer.Write(Bids.Count);
-            foreach (ExchangeOrderPrice price in Asks)
+            foreach (ExchangeOrderPrice price in Asks.Values)
             {
                 price.ToBinary(writer);
             }
-            foreach (ExchangeOrderPrice price in Bids)
+            foreach (ExchangeOrderPrice price in Bids.Values)
             {
                 price.ToBinary(writer);
             }
@@ -118,11 +131,13 @@ namespace ExchangeSharp
             int bidCount = reader.ReadInt32();
             while (askCount-- > 0)
             {
-                Asks.Add(new ExchangeOrderPrice(reader));
+                var exchangeOrderPrice = new ExchangeOrderPrice(reader);
+                Asks.Add(exchangeOrderPrice.Price, exchangeOrderPrice);
             }
             while (bidCount-- > 0)
             {
-                Bids.Add(new ExchangeOrderPrice(reader));
+                var exchangeOrderPrice = new ExchangeOrderPrice(reader);
+                Bids.Add(exchangeOrderPrice.Price, exchangeOrderPrice);
             }
         }
 
@@ -142,7 +157,7 @@ namespace ExchangeSharp
 
             for (int i = 0; i < Asks.Count && amount > 0m; i++)
             {
-                ask = Asks[i];
+                ask = Asks.ElementAt(i).Value;
                 spent = Math.Min(amount, ask.Amount * ask.Price);
                 buyAmount += spent / ask.Price;
                 buyPrice = ask.Price;
@@ -162,7 +177,7 @@ namespace ExchangeSharp
 
             for (int i = 0; i < Bids.Count && amount > 0m; i++)
             {
-                bid = Bids[i];
+                bid = Bids.ElementAt(i).Value;
                 sellPrice = bid.Price;
                 amount -= bid.Amount;
             }

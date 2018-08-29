@@ -10,12 +10,14 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+using System.Security;
+
 namespace ExchangeSharp
 {
     /// <summary>
     /// Encapsulation of a withdrawal request from an exchange
     /// </summary>
-    public class ExchangeWithdrawalRequest
+    public sealed class ExchangeWithdrawalRequest
     {
         /// <summary>The address</summary>
         public string Address { get; set; }
@@ -29,8 +31,8 @@ namespace ExchangeSharp
         /// <summary>Description of the withdrawal</summary>
         public string Description { get; set; }
 
-        /// <summary>Gets or sets the asset.</summary>
-        public string Symbol { get; set; }
+        /// <summary>Gets or sets the currency to withdraw, i.e. BTC.</summary>
+        public string Currency { get; set; }
 
         /// <summary>
         /// Whether to take the fee from the amount.
@@ -38,20 +40,30 @@ namespace ExchangeSharp
         /// </summary>
         public bool TakeFeeFromAmount { get; set; } = true;
 
+        /// <summary>
+        /// Password if required by the exchange
+        /// </summary>
+        public SecureString Password { get; set; }
+
+        /// <summary>
+        /// Authentication code if required by the exchange
+        /// </summary>
+        public SecureString Code { get; set; }
+
         /// <summary>Returns a <see cref="System.String" /> that represents this instance.</summary>
         /// <returns>A <see cref="System.String" /> that represents this instance.</returns>
         public override string ToString()
         {
             // 2.75 ETH to 0x1234asdf
-            string info = $"{this.Amount} {this.Symbol} to {this.Address}";
-            if (!string.IsNullOrWhiteSpace(this.AddressTag))
+            string info = $"{Amount} {Currency} to {Address}";
+            if (!string.IsNullOrWhiteSpace(AddressTag))
             {
-                info += $" with address tag {this.AddressTag}";
+                info += $" with address tag {AddressTag}";
             }
 
-            if (!string.IsNullOrWhiteSpace(this.Description))
+            if (!string.IsNullOrWhiteSpace(Description))
             {
-                info += $" Description: {this.Description}";
+                info += $" Description: {Description}";
             }
 
             return info;

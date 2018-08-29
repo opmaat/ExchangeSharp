@@ -14,23 +14,23 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 using System;
 using System.Collections.Generic;
 
-namespace ExchangeSharpConsoleApp
+namespace ExchangeSharpConsole
 {
-	public static partial class ExchangeSharpConsole
+	public static partial class ExchangeSharpConsoleMain
     {
         public static void RunShowHelp(Dictionary<string, string> dict)
         {
             Console.WriteLine("------------------------------------------------------------");
             Console.WriteLine("ExchangeSharpConsole v. {0}", System.Reflection.Assembly.GetExecutingAssembly().GetName().Version);
             Console.WriteLine("------------------------------------------------------------");
-            Console.WriteLine("Command line arguments should be key=value pairs, separated by space. Please add quotes around any key/value pair with a space in it.");
+            Console.WriteLine("Command line arguments should be key=value pairs, separated by space. Please add quotes around any key=value pair with a space in it.");
             Console.WriteLine();
             Console.WriteLine("Command categories:");
             Console.WriteLine("------------------------------------------------------------");
             Console.WriteLine("help - Show this help screen, or just run without arguments to show help as well.");
             Console.WriteLine();
             Console.WriteLine("test - Run integrations test code against exchanges.");
-            Console.WriteLine(" test currently has no additional arguments.");
+            Console.WriteLine(" exchangeName - regex of exchanges to test, null/empty for all");
             Console.WriteLine();
             Console.WriteLine("export - export exchange data. CSV files have millisecond timestamp, price and amount columns. The export will also convert the CSV to bin files. This can take a long time depending on your sinceDateTime parameter.");
             Console.WriteLine(" Please note that not all exchanges will let you do this and may ban your IP if you try to grab to much data at once. I've added sensible sleep statements to limit request rates.");
@@ -49,11 +49,25 @@ namespace ExchangeSharpConsoleApp
             Console.WriteLine(" Display a key file:");
             Console.WriteLine("  keys mode=display path=pathToKeyFile.bin");               
             Console.WriteLine();
+            Console.WriteLine("showHistoricalTrades - output historical trades to console");
+            Console.WriteLine(" showHistoricalTrades exchangeName=Binance symbol=btcusdt \"startDate=2018-05-17T11:00:00\" \"endDate=2018-05-17T12:00:00\"");
+            Console.WriteLine(" startDate and endDate are optional.");
+            Console.WriteLine();
+            Console.WriteLine("getExchangeNames - get a list of all supported exchange names (no arguments)");
+            Console.WriteLine();
             Console.WriteLine("example - simple example showing how to create an API instance and get the ticker, and place an order.");
             Console.WriteLine(" example currently has no additional arguments.");
             Console.WriteLine();
-            Console.WriteLine("poloniex-websocket - Poloniex, shows how to connect via web socket and listen to tickers.");
-            Console.WriteLine("bittrex-websocket - Bittrex, shows how to connect via web socket and listen to tickers.");
+            Console.WriteLine("websocket-ticker - Shows how to connect via web socket and listen to tickers.");
+            Console.WriteLine(" websocket-ticker exchangeName=Binance");
+            Console.WriteLine();
+            Console.WriteLine("websocket-trades - Shows how to connect via web socket and listen to trades.");
+            Console.WriteLine(" websocket-trades exchangeName=Binance symbols=btcusdt,ethbtc");
+            Console.WriteLine(" symbols is optional, if not provided or empty, all symbols will be queried");
+            Console.WriteLine();
+            Console.WriteLine("websocket-orderbook - Shows how to connect via web socket and listen to the order book.");
+            Console.WriteLine(" websocket-orderbook exchangeName=Binance symbols=btcusdt,ethbtc");
+            Console.WriteLine(" symbols is optional, if not provided or empty, all symbols will be queried");
             Console.WriteLine();
         }
     }

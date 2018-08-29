@@ -1,7 +1,7 @@
 ﻿/*
 MIT LICENSE
 
-Copyright 2018 Digital Ruby, LLC - http://www.digitalruby.com
+Copyright 2017 Digital Ruby, LLC - http://www.digitalruby.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -15,7 +15,7 @@ namespace ExchangeSharp
     using System;
 
     /// <summary>An encapsulation of a deposit or withdrawal to an exchange</summary>
-    public class ExchangeTransaction
+    public sealed class ExchangeTransaction
     {
         /// <summary>The address the transaction was sent to</summary>
         public string Address { get; set; }
@@ -38,8 +38,8 @@ namespace ExchangeSharp
         /// <summary>A value indicating whether the transaction is pending</summary>
         public TransactionStatus Status { get; set; } = TransactionStatus.Unknown;
 
-        /// <summary>The timestamp of the transaction</summary>
-        public DateTime TimestampUTC { get; set; }
+        /// <summary>The timestamp of the transaction, should be in UTC</summary>
+        public DateTime Timestamp { get; set; }
 
         /// <summary>The fee on the transaction</summary>
         public decimal TxFee { get; set; }
@@ -50,7 +50,7 @@ namespace ExchangeSharp
         public override string ToString()
         {
             return
-                $"{this.Amount} {this.Symbol} (fee: {this.TxFee}) sent to Address: {this.Address ?? "null"} with AddressTag: {this.AddressTag ?? "null"} BlockchainTxId: {this.BlockchainTxId ?? "null"} sent at {this.TimestampUTC} UTC. Status: {this.Status}. Exchange paymentId: {this.PaymentId ?? "null"}. Notes: {this.Notes ?? "null"}";
+                $"{Amount} {Symbol} (fee: {TxFee}) sent to Address: {Address ?? "null"} with AddressTag: {AddressTag ?? "null"} BlockchainTxId: {BlockchainTxId ?? "null"} sent at {Timestamp} UTC. Status: {Status}. Exchange paymentId: {PaymentId ?? "null"}. Notes: {Notes ?? "null"}";
         }
     }
 }

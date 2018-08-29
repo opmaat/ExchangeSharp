@@ -24,7 +24,7 @@ namespace ExchangeSharp
     /// <summary>
     /// Details of the current price of an exchange asset
     /// </summary>
-    public class ExchangeTicker
+    public sealed class ExchangeTicker
     {
         /// <summary>
         /// An exchange specific id if known, otherwise null
@@ -89,7 +89,7 @@ namespace ExchangeSharp
     /// <summary>
     /// Info about exchange volume
     /// </summary>
-    public class ExchangeVolume
+    public sealed class ExchangeVolume
     {
         /// <summary>
         /// Last volume update timestamp
@@ -98,23 +98,27 @@ namespace ExchangeSharp
 
         /// <summary>
         /// Price symbol - will equal quantity symbol if exchange doesn't break it out by price unit and quantity unit
+        /// In BTC-USD, this would be BTC
         /// </summary>
-        public string PriceSymbol { get; set; }
+        public string BaseSymbol { get; set; }
 
         /// <summary>
         /// Price amount - will equal QuantityAmount if exchange doesn't break it out by price unit and quantity unit
+        /// In BTC-USD, this would be BTC volume
         /// </summary>
-        public decimal PriceAmount { get; set; }
+        public decimal BaseVolume { get; set; }
 
         /// <summary>
         /// Quantity symbol (converted into this unit)
+        /// In BTC-USD, this would be USD
         /// </summary>
-        public string QuantitySymbol { get; set; }
+        public string ConvertedSymbol { get; set; }
 
         /// <summary>
         /// Quantity amount (this many units total)
+        /// In BTC-USD this would be USD volume
         /// </summary>
-        public decimal QuantityAmount { get; set; }
+        public decimal ConvertedVolume { get; set; }
 
         /// <summary>
         /// Write to a binary writer
@@ -123,10 +127,10 @@ namespace ExchangeSharp
         public void ToBinary(BinaryWriter writer)
         {
             writer.Write(Timestamp.ToUniversalTime().Ticks);
-            writer.Write(PriceSymbol);
-            writer.Write((double)PriceAmount);
-            writer.Write(QuantitySymbol);
-            writer.Write((double)QuantityAmount);
+            writer.Write(BaseSymbol);
+            writer.Write((double)BaseVolume);
+            writer.Write(ConvertedSymbol);
+            writer.Write((double)ConvertedVolume);
         }
 
         /// <summary>
@@ -136,10 +140,10 @@ namespace ExchangeSharp
         public void FromBinary(BinaryReader reader)
         {
             Timestamp = new DateTime(reader.ReadInt64(), DateTimeKind.Utc);
-            PriceSymbol = reader.ReadString();
-            PriceAmount = (decimal)reader.ReadDouble();
-            QuantitySymbol = reader.ReadString();
-            QuantityAmount = (decimal)reader.ReadDouble();
+            BaseSymbol = reader.ReadString();
+            BaseVolume = (decimal)reader.ReadDouble();
+            ConvertedSymbol = reader.ReadString();
+            ConvertedVolume = (decimal)reader.ReadDouble();
         }
     }
 }

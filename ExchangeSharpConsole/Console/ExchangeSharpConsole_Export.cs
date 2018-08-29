@@ -14,10 +14,38 @@ using System;
 using System.Collections.Generic;
 using ExchangeSharp;
 
-namespace ExchangeSharpConsoleApp
+namespace ExchangeSharpConsole
 {
-	public static partial class ExchangeSharpConsole
+	public static partial class ExchangeSharpConsoleMain
     {
+        public static void RunGetHistoricalTrades(Dictionary<string, string> dict)
+        {
+            RequireArgs(dict, "exchangeName", "symbol");
+
+            string exchangeName = dict["exchangeName"];
+            IExchangeAPI api = ExchangeAPI.GetExchangeAPI(exchangeName);
+            string symbol = dict["symbol"];
+            Console.WriteLine("Showing historical trades for exchange {0}...", exchangeName);
+            DateTime? startDate = null;
+            DateTime? endDate = null;
+            if (dict.ContainsKey("startDate"))
+            {
+                startDate = DateTime.Parse(dict["startDate"]).ToUniversalTime();
+            }
+            if (dict.ContainsKey("endDate"))
+            {
+                endDate = DateTime.Parse(dict["endDate"]).ToUniversalTime();
+            }
+            api.GetHistoricalTradesAsync((IEnumerable<ExchangeTrade> trades) =>
+            {
+                foreach (ExchangeTrade trade in trades)
+                {
+                    Console.WriteLine("Trade at timestamp {0}: {1}/{2}/{3}", trade.Timestamp.ToLocalTime(), trade.Id, trade.Price, trade.Amount);
+                }
+                return true;
+            }, symbol, startDate, endDate).Sync();
+        }
+
         public static void RunExportData(Dictionary<string, string> dict)
         {
             RequireArgs(dict, "exchange", "symbol", "path", "sinceDateTime");
