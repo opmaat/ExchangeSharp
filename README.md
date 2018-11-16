@@ -3,13 +3,10 @@
 ## Overview
 ExchangeSharp is a C# console app and framework for trading and communicating with various exchange API end points for cryptocurrency assets. Many exchanges are supported, along with web sockets, withdraws and more!
 
-### I Can Help
-I do cryptocurrency consulting, please don't hesitate to contact me if you have enhancements to ExchangeSharp that you need or a custom solution you would like me to implement (exchangesharp@digitalruby.com).
-
 ### Features
 - Many exchanges supported with public, private and web socket API
 - Easy to use and well documented code and API
-- Optional global symbol normalization, since each exchange has their own way of doing symbols
+- Optional global market symbol normalization, since each exchange has their own way of doing market symbols
 - Runs anywhere .NET core will run (Windows 8.1 or newer, MAC, Linux, iOS, Android, Unity 2018+, etc.)
 
 ### Exchanges
@@ -18,13 +15,13 @@ The following cryptocurrency exchanges are supported:
 
 |Exchange Name     |Public REST|Private REST |Web Socket |
 | ---------------- | --------- | ----------- | --------- |
-| Abucoins         | x         | x           | TO        |
+| Abucoins         | x         | x           | TRO       |
 | Binance          | x         | x           | TRB       |
 | Bitfinex         | x         | x           | TRO       |
 | Bithumb          | x         |             |           |
-| Bitmex           | x         | x           |           |
+| BitMEX           | x         | x           | RO        |
 | Bitstamp         | x         | x           |           |
-| Bittrex          | x         | x           | T         |
+| Bittrex          | x         | x           | TR        |
 | Bleutrade        | x         | x           |           |
 | Coinbase         | x         | x           | TR        |
 | Cryptopia        | x         | x           |           |
@@ -32,19 +29,19 @@ The following cryptocurrency exchanges are supported:
 | Hitbtc           | x         | x           |           |
 | Huobi            | x         | x           | RB        |
 | Kraken           | x         | x           |           |
-| Kucoin           | x         | x           |           |
+| KuCoin           | x         | x           | TR        |
 | Livecoin         | x         | x           |           |
-| Okex             | x         | x           | RB        |
-| Poloniex         | x         | x           | TB        |
+| OKex             | x         | x           | RB        |
+| Poloniex         | x         | x           | TRB       |
 | TuxExchange      | x         | x           |           |
-| Yobit            | x         | x           |           |
+| YoBit            | x         | x           |           |
 | ZB.com           | wip       |             | R         |
 
 The following cryptocurrency services are supported:
 - Cryptowatch (partial)
 
 ### Notes
-ExchangeSharp uses 'symbol' to refer to markets, or pairs of currencies.
+ExchangeSharp uses 'marketSymbol' to refer to markets, or pairs of currencies.
 
 Please send pull requests if you have made a change that you feel is worthwhile, want a bug fixed or want a new feature. You can also donate to get new features.
 
@@ -85,7 +82,7 @@ ExchangeOrderResult result = api.PlaceOrderAsync(new ExchangeOrderRequest
     Amount = 0.01m,
     IsBuy = true,
     Price = ticker.Ask,
-    Symbol = "XXBTZUSD"
+    MarketSymbol = "XXBTZUSD"
 }).Sync();
 
 // Kraken is a bit funny in that they don't return the order details in the initial request, so you have to follow up with an order details request
@@ -121,11 +118,16 @@ ExchangeSharp uses NLog internally currently. To log, use ExchangeSharp.Logger. 
 
 Provide your own nlog.config or app.config nlog configuration if you want to change logging settings or turn logging off.
 
+### Caching
+The ExchageAPI class provides a method caching mechanism. Use MethodCachePolicy to put caching behind public methods, or clear to remove caching. Some methods are cached by default. You can set ExchangeAPI.UseDefaultMethodCachePolicy to false to stop all caching as well.
+
+You can also set request cache policy if you want to tweak how the http caching behaves.
+
 ### How to contribute
 Please read the [contributing guideline](CONTRIBUTING.md) before submitting a pull request.
 
-### I Can Help
-I do cryptocurrency consulting, please don't hesitate to contact me if you have enhancements to ExchangeSharp that you need or a custom solution you would like me to implement (exchangesharp@digitalruby.com).
+### Consulting
+I'm happy to make customizations to the software for you and keep in private repo, email exchangesharp@digitalruby.com.
 
 ### Donations Gratefully Accepted
 Believe it or not, donations are quite rare. I've posted publicly the total donation amounts below. If ExchangeSharp has helped you in anyway, please consider donating.

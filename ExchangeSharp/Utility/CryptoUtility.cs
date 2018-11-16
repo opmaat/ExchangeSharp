@@ -20,6 +20,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Cryptography;
@@ -37,6 +38,23 @@ namespace ExchangeSharp
         private static readonly DateTime unixEpochLocal = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Local);
         private static readonly Encoding utf8EncodingNoPrefix = new UTF8Encoding(false, true);
 
+        private static Func<DateTime> utcNowFunc = UtcNowFuncImpl;
+
+        private static DateTime UtcNowFuncImpl()
+        {
+            return DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Set utc now func for override CryptoUtility.UtcNow. Set to null to go back to default CryptoUtility.UtcNow.
+        /// This is primarily useful for unit or integration testing.
+        /// </summary>
+        /// <param name="utcNowFunc">Utc now override func</param>
+        public static void SetDateTimeUtcNowFunc(Func<DateTime> utcNowFunc)
+        {
+            CryptoUtility.utcNowFunc = utcNowFunc ?? UtcNowFuncImpl;
+        }
+
         /// <summary>
         /// Empty object array
         /// </summary>
@@ -48,18 +66,18 @@ namespace ExchangeSharp
         public static readonly string[] EmptyStringArray = new string[0];
 
         /// <summary>
-        /// Static constructor
+        /// Throw ArgumentNullException if obj is null
         /// </summary>
-        static CryptoUtility()
+        /// <param name="obj">Object</param>
+        /// <param name="name">Parameter name</param>
+        /// <param name="message">Message</param>
+        public static void ThrowIfNull(this object obj, string name, string message = null)
         {
-            IsWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-            IsMono = (Type.GetType("Mono.Runtime") != null);
+            if (obj == null)
+            {
+                throw new ArgumentNullException(name, message);
+            }
         }
-
-        /// <summary>
-        /// Utf-8 encoding with no prefix bytes
-        /// </summary>
-        public static Encoding UTF8EncodingNoPrefix { get { return utf8EncodingNoPrefix; } }
 
         /// <summary>
         /// Convert an object to string using invariant culture
@@ -118,6 +136,26 @@ namespace ExchangeSharp
             using (var compressStream = new MemoryStream(bytes))
             {
                 using (var zipStream = new GZipStream(compressStream, CompressionMode.Decompress))
+                {
+                    using (var resultStream = new MemoryStream())
+                    {
+                        zipStream.CopyTo(resultStream);
+                        return resultStream.ToArray();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Decompress deflate bytes
+        /// </summary>
+        /// <param name="bytes">Bytes that are Deflate</param>
+        /// <returns>Uncompressed bytes</returns>
+        public static byte[] DecompressDeflate(byte[] bytes)
+        {
+            using (var compressStream = new MemoryStream(bytes))
+            {
+                using (var zipStream = new DeflateStream(compressStream, CompressionMode.Decompress))
                 {
                     using (var resultStream = new MemoryStream())
                     {
@@ -188,6 +226,7 @@ namespace ExchangeSharp
                 {
                     // fallback to float conversion, i.e. 1E-1 for a decimal conversion will fail
                     string stringValue = (jValue == null ? obj.ToStringInvariant() : jValue.Value.ToStringInvariant());
+                    if (string.IsNullOrWhiteSpace(stringValue)) return defaultValue;
                     decimal decimalValue = decimal.Parse(stringValue, System.Globalization.NumberStyles.Float);
                     return (T)Convert.ChangeType(decimalValue, typeof(T), CultureInfo.InvariantCulture);
                 }
@@ -219,11 +258,11 @@ namespace ExchangeSharp
         }
 
         /// <summary>
-        /// Convert a secure string to binary data
+        /// Convert a secure string to non-secure binary data
         /// </summary>
         /// <param name="s">SecureString</param>
         /// <returns>Binary data</returns>
-        public static byte[] ToBytesUTF8(this SecureString s)
+        public static byte[] ToUnsecureBytesUTF8(this SecureString s)
         {
             if (s == null)
             {
@@ -308,6 +347,20 @@ namespace ExchangeSharp
                 return null;
             }
             return DecompressGzip(bytes).ToStringFromUTF8();
+        }
+
+        /// <summary>
+        /// Convert Deflate utf-8 bytes to a string
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns>UTF-8 string or null if bytes is null</returns>
+        public static string ToStringFromUTF8Deflate(this byte[] bytes)
+        {
+            if (bytes == null)
+            {
+                return null;
+            }
+            return DecompressDeflate(bytes).ToStringFromUTF8();
         }
 
         /// <summary>
@@ -520,7 +573,7 @@ namespace ExchangeSharp
         }
 
         /// <summary>
-        /// Convert a timestamp to DateTime. If value is null, DateTime.UtcNow is returned.
+        /// Convert a timestamp to DateTime. If value is null, CryptoUtility.UtcNow is returned.
         /// </summary>
         /// <param name="value">Timestamp object (JToken, string, double, etc.)</param>
         /// <param name="type">Type of timestamp</param>
@@ -529,7 +582,7 @@ namespace ExchangeSharp
         {
             if (value == null || type == TimestampType.None)
             {
-                return DateTime.UtcNow;
+                return CryptoUtility.UtcNow;
             }
 
             switch (type)
@@ -1147,16 +1200,6 @@ namespace ExchangeSharp
             return Math.Floor(amount * adjustment) / adjustment;
         }
 
-        /// <summary>
-        /// True if platform is Windows, false otherwise
-        /// </summary>
-        public static bool IsWindows { get; private set; }
-
-        /// <summary>
-        /// True if running under Mono (https://www.mono-project.com/), false if not
-        /// </summary>
-        public static bool IsMono { get; private set; }
-
         /// <summary>Calculates the precision allowed based on the number of decimal points in a number.</summary>
         /// <param name="numberWithDecimals">The number on which to count decimal points.</param>
         /// <returns>A number indicating how many digits are after the decimal point. 
@@ -1191,6 +1234,64 @@ namespace ExchangeSharp
         {
             return task.ConfigureAwait(false).GetAwaiter().GetResult();
         }
+
+        /// <summary>
+        /// Wrap a method in caching logic. Also takes care of making a new SynchronizationContextRemover.
+        /// This should not be used for post requests or other requests that operate on real-time data that changes with each request.
+        /// </summary>
+        /// <typeparam name="T">Return type</typeparam>
+        /// <param name="cache">Cache</param>
+        /// <param name="methodCachePolicy">Method cache policy</param>
+        /// <param name="method">Method implementation</param>
+        /// <param name="arguments">Function arguments - function name and then param name, value, name, value, etc.</param>
+        /// <returns></returns>
+        public static async Task<T> CacheMethod<T>(this ICache cache, Dictionary<string, TimeSpan> methodCachePolicy, Func<Task<T>> method, params object[] arguments) where T : class
+        {
+            await new SynchronizationContextRemover();
+            methodCachePolicy.ThrowIfNull(nameof(methodCachePolicy));
+            if (arguments.Length % 2 == 0)
+            {
+                throw new ArgumentException("Must pass function name and then name and value of each argument");
+            }
+            string methodName = arguments[0].ToStringInvariant();
+            string cacheKey = methodName;
+            for (int i = 1; i < arguments.Length;)
+            {
+                cacheKey += "|" + arguments[i++].ToStringInvariant() + "=" + arguments[i++].ToStringInvariant("(null)");
+            }
+            if (methodCachePolicy.TryGetValue(methodName, out TimeSpan cacheTime))
+            {
+                return (await cache.Get<T>(cacheKey, async () =>
+                {
+                    T innerResult = await method();
+                    return new CachedItem<T>(innerResult, CryptoUtility.UtcNow.Add(cacheTime));
+                })).Value;
+            }
+            else
+            {
+                return await method();
+            }
+        }
+
+        /// <summary>
+        /// Utf-8 encoding with no prefix bytes
+        /// </summary>
+        public static Encoding UTF8EncodingNoPrefix { get { return utf8EncodingNoPrefix; } }
+
+        /// <summary>
+        /// Return CryptoUtility.UtcNow or override if SetDateTimeUtcNowFunc has been called
+        /// </summary>
+        public static DateTime UtcNow { get { return utcNowFunc(); } }
+
+        /// <summary>
+        /// True if platform is Windows, false otherwise
+        /// </summary>
+        public static bool IsWindows { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+        /// <summary>
+        /// True if running under Mono (https://www.mono-project.com/), false if not
+        /// </summary>
+        public static bool IsMono { get; } = (Type.GetType("Mono.Runtime") != null);
     }
 
     /// <summary>
