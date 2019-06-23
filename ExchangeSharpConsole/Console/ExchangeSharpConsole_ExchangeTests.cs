@@ -49,12 +49,12 @@ namespace ExchangeSharpConsole
                 {
                     return "BTC-LTC";
                 }
-                else if (api is ExchangeBinanceAPI || api is ExchangeOkexAPI || api is ExchangeBleutradeAPI ||
+                else if (api is ExchangeBinanceAPI || api is ExchangeOkexAPI ||/* api is ExchangeBleutradeAPI ||*/
                     api is ExchangeKucoinAPI || api is ExchangeHuobiAPI || api is ExchangeAbucoinsAPI)
                 {
                     return "ETH-BTC";
                 }
-                else if (api is ExchangeYobitAPI)
+                else if (api is ExchangeYobitAPI || api is ExchangeBitBankAPI)
                 {
                     return "LTC-BTC";
                 }
@@ -79,7 +79,12 @@ namespace ExchangeSharpConsole
             IExchangeAPI[] apis = ExchangeAPI.GetExchangeAPIs();
             foreach (IExchangeAPI api in apis)
             {
-                if (nameRegex != null && !Regex.IsMatch(api.Name, nameRegex, RegexOptions.IgnoreCase))
+                // WIP exchanges...
+                if (api is ExchangeUfoDexAPI)
+                {
+                    continue;
+                }
+                else if (nameRegex != null && !Regex.IsMatch(api.Name, nameRegex, RegexOptions.IgnoreCase))
                 {
                     continue;
                 }
@@ -95,6 +100,21 @@ namespace ExchangeSharpConsole
                         IReadOnlyCollection<string> symbols = api.GetMarketSymbolsAsync().Sync().ToArray();
                         Assert(symbols != null && symbols.Count != 0 && symbols.Contains(marketSymbol, StringComparer.OrdinalIgnoreCase));
                         Console.WriteLine($"OK (default: {marketSymbol}; {symbols.Count} symbols)");
+                    }
+
+                    if (functionRegex == null || Regex.IsMatch("currencies", functionRegex, RegexOptions.IgnoreCase))
+                    {
+                        try
+                        {
+                            Console.Write("Test {0} GetCurrenciesAsync... ", api.Name);
+                            var currencies = api.GetCurrenciesAsync().Sync();
+                            Assert(currencies.Count != 0);
+                            Console.WriteLine($"OK ({currencies.Count} currencies)");
+                        }
+                        catch (NotImplementedException)
+                        {
+                            Console.WriteLine($"Not implemented");
+                        }
                     }
 
                     if (functionRegex == null || Regex.IsMatch("orderbook", functionRegex, RegexOptions.IgnoreCase))
@@ -191,4 +211,3 @@ namespace ExchangeSharpConsole
         }
     }
 }
-

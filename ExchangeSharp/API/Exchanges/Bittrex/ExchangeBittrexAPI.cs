@@ -33,6 +33,9 @@ namespace ExchangeSharp
 
         public ExchangeBittrexAPI()
         {
+            // https://bittrex.github.io/api/v1-1#call-limits (Same counts for the V3 API)
+            RateLimit = new RateGate(60, TimeSpan.FromSeconds(60));
+
             TwoFieldDepositCoinTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
                 "BITSHAREX",
@@ -505,6 +508,42 @@ namespace ExchangeSharp
             return withdrawalResponse;
         }
 
+        protected override async Task<IEnumerable<ExchangeTransaction>> OnGetWithdrawHistoryAsync(string currency)
+        {
+            string url = $"/account/getwithdrawalhistory{(string.IsNullOrWhiteSpace(currency) ? string.Empty : $"?currency={currency}")}";
+            JToken result = await MakeJsonRequestAsync<JToken>(url, null, await GetNoncePayloadAsync());
+
+            var transactions = result.Select(t => new ExchangeTransaction
+            {
+                Amount = t["Amount"].ConvertInvariant<decimal>(),
+                Address = t["Address"].ToStringInvariant(),
+                Currency = t["Currency"].ToStringInvariant(),
+                PaymentId = t["PaymentUuid"].ToStringInvariant(),
+                BlockchainTxId = t["TxId"].ToStringInvariant(),
+                TxFee = t["TxCost"].ConvertInvariant<decimal>(),
+                Timestamp = DateTime.Parse(t["Opened"].ToStringInvariant()),
+                Status = ToStatus(t)
+            });
+
+            return transactions;
+        }
+        private TransactionStatus ToStatus(JToken withdraw)
+        {
+            if (withdraw["Canceled"].ConvertInvariant<bool>())
+                return TransactionStatus.Rejected;
+
+            if (withdraw["InvalidAddress"].ConvertInvariant<bool>())
+                return TransactionStatus.Failure;
+
+            if (withdraw["PendingPayment"].ConvertInvariant<bool>())
+                return TransactionStatus.AwaitingApproval;
+
+            if (withdraw["Authorized"].ConvertInvariant<bool>())
+                return TransactionStatus.Complete;
+
+            return TransactionStatus.Unknown;
+        }
+
         protected override async Task OnCancelOrderAsync(string orderId, string marketSymbol = null)
         {
             await MakeJsonRequestAsync<JToken>("/market/cancel?uuid=" + orderId, null, await GetNoncePayloadAsync());
@@ -555,6 +594,20 @@ namespace ExchangeSharp
             }
 
             return depositDetails;
+        }
+
+        protected override async Task<Dictionary<string, decimal>> OnGetMarginAmountsAvailableToTradeAsync(bool includeZeroBalances)
+        {
+            Dictionary<string, decimal> marginAmounts = new Dictionary<string, decimal>();
+
+            string url = "/account/getbalances";
+            JToken response = await MakeJsonRequestAsync<JToken>(url, null, await GetNoncePayloadAsync());
+
+            var result = response
+                .Where(i => includeZeroBalances || i["Available"].ConvertInvariant<decimal>() != 0)
+                .ToDictionary(i => i["Currency"].ToStringInvariant(), i => i["Available"].ConvertInvariant<decimal>());
+
+            return result;
         }
     }
 
