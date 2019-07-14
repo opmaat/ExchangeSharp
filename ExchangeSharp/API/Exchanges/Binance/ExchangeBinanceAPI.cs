@@ -612,7 +612,7 @@ namespace ExchangeSharp
                 payload["symbol"] = marketSymbol;
                 if (afterDate != null)
                 {
-                    payload["timestamp"] = afterDate.Value.UnixTimestampFromDateTimeMilliseconds();
+                    payload["startTime"] = afterDate.Value.UnixTimestampFromDateTimeMilliseconds();
                 }
                 JToken token = await MakeJsonRequestAsync<JToken>("/myTrades", BaseUrlPrivate, payload);
                 foreach (JToken trade in token)
