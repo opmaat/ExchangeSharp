@@ -68,9 +68,9 @@ namespace ExchangeSharp
         public ExchangeBinanceAPI()
         {
             // give binance plenty of room to accept requests
-            RequestWindow = TimeSpan.FromTicks(60000); 
+            RequestWindow = TimeSpan.FromMilliseconds(60000);  // 60000 is max value
             NonceStyle = NonceStyle.UnixMilliseconds;
-            NonceOffset = TimeSpan.FromSeconds(0.0);
+            NonceOffset = TimeSpan.FromSeconds(15);
             MarketSymbolSeparator = string.Empty;
             WebSocketOrderBookType = WebSocketOrderBookType.DeltasOnly;
         }
