@@ -68,9 +68,9 @@ namespace ExchangeSharp
         public ExchangeBinanceAPI()
         {
             // give binance plenty of room to accept requests
-            RequestWindow = TimeSpan.FromMinutes(15.0);
+            RequestWindow = TimeSpan.FromTicks(60000); 
             NonceStyle = NonceStyle.UnixMilliseconds;
-            NonceOffset = TimeSpan.FromSeconds(10.0);
+            NonceOffset = TimeSpan.FromSeconds(0.0);
             MarketSymbolSeparator = string.Empty;
             WebSocketOrderBookType = WebSocketOrderBookType.DeltasOnly;
         }
