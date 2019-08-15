@@ -232,13 +232,26 @@ namespace ExchangeSharp
             }
             return result;
         }
+		
+		/// <summary>
+		/// Converts a hex string to a byte array
+		/// </summary>
+		/// <param name="hex">hex string</param>
+		/// <returns>byte array representation of the same string</returns>
+		public static byte[] StringToByteArray(this string hex)
+		{ // https://stackoverflow.com/questions/321370/how-can-i-convert-a-hex-string-to-a-byte-array
+			return Enumerable.Range(0, hex.Length / 2)
+				.Select(x => Convert
+				.ToByte(hex.Substring(x * 2, 2), 16))
+				.ToArray();
+		}
 
-        /// <summary>
-        /// Covnert a secure string to a non-secure string
-        /// </summary>
-        /// <param name="s">SecureString</param>
-        /// <returns>Non-secure string</returns>
-        public static string ToUnsecureString(this SecureString s)
+		/// <summary>
+		/// Covnert a secure string to a non-secure string
+		/// </summary>
+		/// <param name="s">SecureString</param>
+		/// <returns>Non-secure string</returns>
+		public static string ToUnsecureString(this SecureString s)
         {
             if (s == null)
             {
@@ -580,6 +593,16 @@ namespace ExchangeSharp
             return unixEpochLocal.AddMilliseconds(unixTimeStampMilliseconds).ToUniversalTime();
         }
 
+		/// <summary>
+		/// Get a UTC date time from a unix epoch in microseconds
+		/// </summary>
+		/// <param name="unixTimeStampSeconds">Unix epoch in microseconds</param>
+		/// <returns>UTC DateTime</returns>
+		public static DateTime UnixTimeStampToDateTimeMicroseconds(this long unixTimeStampMicroseconds)
+		{
+			return unixEpoch.AddTicks(unixTimeStampMicroseconds * 10);
+		}
+
         /// <summary>
         /// Get a UTC date time from a unix epoch in nanoseconds
         /// </summary>
@@ -590,22 +613,22 @@ namespace ExchangeSharp
             return unixEpoch.AddTicks((long)unixTimeStampNanoseconds / 100);
         }
 
-        /// <summary>
-        /// Get a UTC date time from a unix epoch in nanoseconds
-        /// </summary>
-        /// <param name="unixTimeStampSeconds">Unix epoch in milliseconds</param>
-        /// <returns>UTC DateTime</returns>
-        public static DateTime UnixTimeStampToDateTimeNanoseconds(this long unixTimeStampNanoseconds)
-        {
-            return unixEpoch.AddTicks(unixTimeStampNanoseconds / 100);
-        }
+		/// <summary>
+		/// Get a UTC date time from a unix epoch in nanoseconds
+		/// </summary>
+		/// <param name="unixTimeStampSeconds">Unix epoch in milliseconds</param>
+		/// <returns>UTC DateTime</returns>
+		public static DateTime UnixTimeStampToDateTimeNanoseconds(this long unixTimeStampNanoseconds)
+		{
+			return unixEpoch.AddTicks(unixTimeStampNanoseconds / 100);
+		}
 
-        /// <summary>
-        /// Get a unix timestamp in seconds from a DateTime
-        /// </summary>
-        /// <param name="dt">DateTime</param>
-        /// <returns>Unix epoch in seconds</returns>
-        public static double UnixTimestampFromDateTimeSeconds(this DateTime dt)
+		/// <summary>
+		/// Get a unix timestamp in seconds from a DateTime
+		/// </summary>
+		/// <param name="dt">DateTime</param>
+		/// <returns>Unix epoch in seconds</returns>
+		public static double UnixTimestampFromDateTimeSeconds(this DateTime dt)
         {
             if (dt.Kind != DateTimeKind.Utc)
             {
@@ -649,7 +672,10 @@ namespace ExchangeSharp
                 case TimestampType.UnixNanoseconds:
                     return UnixTimeStampToDateTimeNanoseconds(value.ConvertInvariant<long>());
 
-                case TimestampType.UnixMillisecondsDouble:
+				case TimestampType.UnixMicroeconds:
+					return UnixTimeStampToDateTimeMicroseconds(value.ConvertInvariant<long>());
+
+				case TimestampType.UnixMillisecondsDouble:
                     return UnixTimeStampToDateTimeMilliseconds(value.ConvertInvariant<double>());
 
                 case TimestampType.UnixMilliseconds:
@@ -1378,15 +1404,20 @@ namespace ExchangeSharp
         /// </summary>
         None,
 
-        /// <summary>
-        /// Unix nanoseconds (long)
-        /// </summary>
-        UnixNanoseconds,
+		/// <summary>
+		/// Unix nanoseconds (long)
+		/// </summary>
+		UnixNanoseconds,
 
-        /// <summary>
-        /// Unix milliseconds (double)
-        /// </summary>
-        UnixMillisecondsDouble,
+		/// <summary>
+		/// Unix microseconds (long)
+		/// </summary>
+		UnixMicroeconds,
+
+		/// <summary>
+		/// Unix milliseconds (double)
+		/// </summary>
+		UnixMillisecondsDouble,
 
         /// <summary>
         /// Unix milliseconds (long)
