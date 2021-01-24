@@ -1,4 +1,4 @@
-﻿/*
+/*
 MIT LICENSE
 
 Copyright 2017 Tailormade 2018, SL - http://www.tailormade.eu
@@ -84,16 +84,17 @@ namespace ExchangeSharp
             JToken obj = await MakeJsonRequestAsync<JToken>("/prices");
             foreach (JToken token in obj)
             {
-                var ticker = ParseTicker(NormalizeMarketSymbol(token["symbol"].ToStringInvariant()), token);
+                var ticker = await ParseTickerAsync(NormalizeMarketSymbol(token["symbol"].ToStringInvariant()), token);
                 ticker.MarketSymbol = token["symbol"].ToStringInvariant();
                 tickers.Add(new KeyValuePair<string, ExchangeTicker>(ticker.MarketSymbol, ticker));
             }
             return tickers;
         }
-        private ExchangeTicker ParseTicker(string symbol, JToken token)
+
+		private async Task<ExchangeTicker> ParseTickerAsync(string symbol, JToken token)
         {
             // {"priceChange":"-0.00192300","priceChangePercent":"-4.735","weightedAvgPrice":"0.03980955","prevClosePrice":"0.04056700","lastPrice":"0.03869000","lastQty":"0.69300000","bidPrice":"0.03858500","bidQty":"38.35000000","askPrice":"0.03869000","askQty":"31.90700000","openPrice":"0.04061300","highPrice":"0.04081900","lowPrice":"0.03842000","volume":"128015.84300000","quoteVolume":"5096.25362239","openTime":1512403353766,"closeTime":1512489753766,"firstId":4793094,"lastId":4921546,"count":128453}
-            var ticker = this.ParseTicker(token, symbol, "ask", "bid", "last", "volume.base", "volume.quote", "timestamp", TimestampType.Iso8601);
+            var ticker = await this.ParseTickerAsync(token, symbol, "ask", "bid", "last", "volume.base", "volume.quote", "timestamp", TimestampType.Iso8601);
             JToken volume = token["volume"];
             ticker.Volume.BaseCurrencyVolume = volume["base"].ConvertInvariant<decimal>();
             ticker.Volume.QuoteCurrencyVolume = volume["quote"].ConvertInvariant<decimal>();
@@ -294,7 +295,7 @@ namespace ExchangeSharp
         }
 
 
-        protected override async Task<IEnumerable<ExchangeMarket>> OnGetMarketSymbolsMetadataAsync()
+        protected internal async Task<IEnumerable<ExchangeMarket>> OnGetMarketSymbolsMetadataAsync()
         {
             List<ExchangeMarket> markets = new List<ExchangeMarket>();
             JToken obj = await MakeJsonRequestAsync<JToken>("/symbols");

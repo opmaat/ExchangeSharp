@@ -1,4 +1,4 @@
-﻿/*
+/*
 MIT LICENSE
 
 Copyright 2017 Tailormade 2018, SL - http://www.tailormade.eu
@@ -61,7 +61,7 @@ namespace ExchangeSharp
         {
             JToken obj = await MakeJsonRequestAsync<JToken>($"/ticker?pair={marketSymbol}");
             JToken token = obj["ticker"][0];
-            var ticker = ParseTicker(marketSymbol, token);
+            var ticker = await ParseTickerAsync(marketSymbol, token);
             ticker.Volume.Timestamp = CryptoUtility.ParseTimestamp(obj["timestamp"], TimestampType.UnixMilliseconds);
             return ticker;
         }
@@ -69,10 +69,10 @@ namespace ExchangeSharp
         {
             throw new NotImplementedException();
         }
-        private ExchangeTicker ParseTicker(string symbol, JToken token)
-        {
+		private async Task<ExchangeTicker> ParseTickerAsync(string symbol, JToken token)
+		{
             // {"priceChange":"-0.00192300","priceChangePercent":"-4.735","weightedAvgPrice":"0.03980955","prevClosePrice":"0.04056700","lastPrice":"0.03869000","lastQty":"0.69300000","bidPrice":"0.03858500","bidQty":"38.35000000","askPrice":"0.03869000","askQty":"31.90700000","openPrice":"0.04061300","highPrice":"0.04081900","lowPrice":"0.03842000","volume":"128015.84300000","quoteVolume":"5096.25362239","openTime":1512403353766,"closeTime":1512489753766,"firstId":4793094,"lastId":4921546,"count":128453}
-            var ticker = this.ParseTicker(token, symbol, "high", "low", "last", "volume");
+            var ticker = await this.ParseTickerAsync(token, symbol, "high", "low", "last", "volume");
             return ticker;
         }
 
@@ -285,7 +285,7 @@ namespace ExchangeSharp
         }
 
 
-        protected override async Task<IEnumerable<ExchangeMarket>> OnGetMarketSymbolsMetadataAsync()
+        protected internal override async Task<IEnumerable<ExchangeMarket>> OnGetMarketSymbolsMetadataAsync()
         {
             List<ExchangeMarket> markets = new List<ExchangeMarket>();
             JToken obj = await MakeJsonRequestAsync<JToken>("/pairList");
