@@ -173,7 +173,7 @@ namespace ExchangeSharp
             await api.ProcessRequestAsync(request, payload);
             HttpWebResponse response = null;
             string responseString = null;
-
+            
             try
             {
                 try
