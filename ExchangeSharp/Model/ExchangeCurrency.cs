@@ -52,5 +52,8 @@ namespace ExchangeSharp
 
         /// <summary>Minimum number of confirmations before deposit will post at the exchange</summary>
         public int MinConfirmations { get; set; }
+
+        /// <summary>Number of decimal places supported for this currency</summary>
+        public int AmountPrecision { get; set; }
     }
 }
